@@ -8,18 +8,24 @@ from enum import Enum
 from typing import Optional, Tuple, Dict, Any
 
 from calibrator import StereoCalibrator
+from dataset_collector import DistanceDatasetCollector
 
 class StereoMode(Enum):
     REAL_TIME = "real_time"
     VIDEO_FILE = "video_file"
 
 class StereoVision:
-    def __init__(self, calibration_file: str = "calibration.json"):
+    def __init__(
+            self, 
+            calibration_file: str = "calibration.json",
+            dataset_collector: Optional[DistanceDatasetCollector] = None
+        ):
         self.calibration_data = self.load_calibration(calibration_file)
         self.mode = None
         self.left_cap = None
         self.right_cap = None
         self.is_initialized = False
+        self.dataset_collector = dataset_collector 
         
         self.set_stereo_params()
         
@@ -155,7 +161,6 @@ class StereoVision:
         """
         self.mode = StereoMode.VIDEO_FILE
         
-        # Проверка существования файлов
         if not Path(left_video_path).exists():
             raise FileNotFoundError(f"Videofile not found: {left_video_path}")
         
@@ -163,11 +168,9 @@ class StereoVision:
             raise FileNotFoundError(f"Videofile not found:\
                                     {right_video_path}")
         
-        # Открытие видеофайлов
         self.left_cap = cv2.VideoCapture(left_video_path)
         self.right_cap = cv2.VideoCapture(right_video_path)
         
-        # Проверка успешного открытия видео
         if not self.left_cap.isOpened():
             raise ValueError(f"Failed to open videofile:\
                               {left_video_path}")
@@ -330,7 +333,8 @@ class StereoVision:
     
     def process_frame(
             self, 
-            show_results: bool = True
+            show_results: bool = True,
+            collect_data: bool = True
         ) -> Tuple[Optional[np.ndarray], 
              Optional[np.ndarray],
              Optional[np.ndarray]]:
@@ -339,6 +343,7 @@ class StereoVision:
 
         Args:
             show_results: whether to show processing results
+            collect_data: whether to collect data for training dataset
 
         Returns:
             Tuple (left frame, right frame, disparity map)
@@ -353,6 +358,13 @@ class StereoVision:
         
         # Calculating disparity
         disparity = self.compute_disparity(left_rect, right_rect)
+
+        if collect_data and self.dataset_collector is not None:
+            focal_length = self.calibration_data.get('focal_length', 1250)
+            baseline = self.calibration_data.get('baseline', 0.12)
+            self.dataset_collector.save_sample(
+                left_rect, disparity, focal_length, baseline
+            )
         
         if show_results:
             # Creating a mosaic for display
@@ -362,9 +374,14 @@ class StereoVision:
             # Adding a disparity map
             disparity_color = cv2.applyColorMap(disparity, cv2.COLORMAP_JET)
             if bottom_row.shape[1] > disparity_color.shape[1]:
-                padding = np.zeros((disparity_color.shape[0], 
-                                  bottom_row.shape[1] - disparity_color.shape[1], 
-                                  3), dtype=np.uint8)
+                padding = np.zeros(
+                    (
+                        disparity_color.shape[0], 
+                        bottom_row.shape[1] - disparity_color.shape[1], 
+                        3
+                    ), 
+                    dtype=np.uint8
+                )
                 disparity_color = np.hstack((disparity_color, padding))
             
             mosaic = np.vstack((top_row, bottom_row, disparity_color))
@@ -380,18 +397,26 @@ class StereoVision:
         
         return frame_left, frame_right, disparity
     
-    def run(self):
+    def run(self, collect_data: bool = False):
         if not self.is_initialized:
             print("The system is not initialized")
             return
-        
-        print("Starting processing. Press 'q' to exit.")
-        
+
+        if collect_data:
+            print("Starting processing with data collection. "
+                "Press 'q' to exit, 's' to save a sample.")
+        else:
+            print("Starting processing. Press 'q' to exit.")
+
         while True:
-            result = self.process_frame(show_results=True)
+            result = self.process_frame(show_results=True, collect_data=collect_data)
             if result[0] is None:
                 break
-        
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
+                break
+
         self.cleanup()
     
     def cleanup(self):
@@ -407,15 +432,17 @@ class StereoVision:
 
 """
 # Examle
+    dataset_collector = DistanceDatasetCollector("stereo_depth_dataset")
+
     # Working with real cameras
-    # stereo = StereoVision("calibration.json")
+    # stereo = StereoVision("calibration.json", dataset_collector)
     # stereo.initialize_real_time(left_cam_id=0, right_cam_id=1)
-    # stereo.run()
+    # stereo.run(collect_data=True)
     
     # Working with video files
-    # stereo = StereoVision("calibration.json")
+    # stereo = StereoVision("calibration.json", dataset_collector)
     # stereo.initialize_video_files("left_video.mp4", "right_video.mp4")
-    # stereo.run()
+    # stereo.run(collect_data=True)
     
     # Calibrating cameras
     # calibrator = StereoCalibrator()
