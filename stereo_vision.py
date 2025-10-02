@@ -55,7 +55,7 @@ class StereoVision:
     
     def set_stereo_params(self, 
                          min_disparity: int       = 0,
-                         num_disparities: int     = 16,
+                         num_disparities: int     = 64, 
                          block_size: int          = 15,
                          speckle_window_size: int = 100,
                          speckle_range: int       = 32,
@@ -356,7 +356,6 @@ class StereoVision:
         # Rectification of frames
         left_rect, right_rect = self.rectify_frames(frame_left, frame_right)
         
-        # Calculating disparity
         disparity = self.compute_disparity(left_rect, right_rect)
 
         if collect_data and self.dataset_collector is not None:
