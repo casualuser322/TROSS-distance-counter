@@ -85,7 +85,6 @@ class StereoCalibrator:
                 print(f"Failed to load images: {left_path} or {right_path}")
                 continue
             
-            # Finding corners in both images
             corners_left = self.find_chessboard_corners(left_img)
             corners_right = self.find_chessboard_corners(right_img)
             
@@ -176,7 +175,6 @@ class StereoCalibrator:
         right_map_x, right_map_y = cv2.initUndistortRectifyMap(
             mtx_right, dist_right, R2, P2, image_size, cv2.CV_32FC1)
         
-        # Saving parameters
         calibration_data = {
             'camera_matrix_left': mtx_left,
             'dist_coeffs_left': dist_left,
@@ -194,7 +192,7 @@ class StereoCalibrator:
             'roi_right': roi2,
             'q_matrix': Q,
             'baseline': np.linalg.norm(T),  # distance between cameras
-            'focal_length': mtx_left[0, 0]  # focal length
+            'focal_length': mtx_left[0, 0] 
         }
         
         return calibration_data

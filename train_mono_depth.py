@@ -62,12 +62,14 @@ class MonoDepthDataset(Dataset):
         # image [C,H,W], depth [1,H,W], mask [1,H,W]
         image_t = torch.from_numpy(img).permute(2, 0, 1).contiguous()  # (3,H,W)
         depth_t = torch.from_numpy(depth).unsqueeze(0).contiguous()    # (1,H,W)
-        mask_t = torch.from_numpy(mask.astype(np.uint8)).unsqueeze(0).contiguous() 
+        mask_t = torch.from_numpy(
+            mask.astype(np.uint8)
+        ).unsqueeze(0).contiguous() 
 
         return image_t, depth_t, mask_t, str(img_path)
 
 
-class SimpleDepthNet(nn.Module):
+class MonoDepthNet(nn.Module):
     def __init__(self):
         super().__init__()
         def conv(in_c, out_c, k=3, p=1, s=1):
@@ -285,7 +287,7 @@ def train_loop(args):
         pin_memory=True
     )
 
-    model = SimpleDepthNet().to(device)
+    model = MonoDepthNet().to(device)
     optimizer = optim.Adam(
         model.parameters(), 
         lr=args.lr,
