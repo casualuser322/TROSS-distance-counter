@@ -7,6 +7,7 @@ This repository contains two independent but related components:
 1. A **stereo calibration module** (`StereoCalibrator`) for computing intrinsic and extrinsic camera parameters using a checkerboard calibration target.
 2. A **monocular depth prediction model** (`MonoDepthNet`) implemented in PyTorch. The network is trained to predict dense depth maps from single RGB images.
 
+
 Both parts can be used separately. The stereo calibration is used to generate accurate disparity-to-depth mappings and rectified stereo image pairs, while the neural network attempts to approximate depth from a single view through supervised learning.
 
 ---

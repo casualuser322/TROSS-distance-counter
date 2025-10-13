@@ -26,7 +26,6 @@ class StereoCalibrator:
             cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001
         )
         
-        # Preparing object points
         self.objp = np.zeros(
             (
                 chessboard_size[0] * chessboard_size[1], 3
@@ -166,9 +165,9 @@ class StereoCalibrator:
         print("Stereorectification...")
         R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(
             mtx_left, dist_left, mtx_right, dist_right,
-            image_size, R, T, alpha=0)
+            image_size, R, T, alpha=0
+        )
         
-        # Calculation of transformation maps for rectification
         left_map_x, left_map_y = cv2.initUndistortRectifyMap(
             mtx_left, dist_left, R1, P1, image_size, cv2.CV_32FC1)
         
