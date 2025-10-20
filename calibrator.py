@@ -81,8 +81,7 @@ class StereoCalibrator:
             right_img = cv2.imread(right_path)
             
             if left_img is None or right_img is None:
-                print(f"Failed to load images: {left_path} or {right_path}")
-                continue
+                raise FileNotFoundError(f"Cannot load {left_path} or {right_path}")
             
             corners_left = self.find_chessboard_corners(left_img)
             corners_right = self.find_chessboard_corners(right_img)
