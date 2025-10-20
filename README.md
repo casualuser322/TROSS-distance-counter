@@ -7,6 +7,7 @@ This repository contains two independent but related components:
 1. A **stereo calibration module** (`StereoCalibrator`) for computing intrinsic and extrinsic camera parameters using a checkerboard calibration target.
 2. A **monocular depth prediction model** (`MonoDepthNet`) implemented in PyTorch. The network is trained to predict dense depth maps from single RGB images.
 
+
 Both parts can be used separately. The stereo calibration is used to generate accurate disparity-to-depth mappings and rectified stereo image pairs, while the neural network attempts to approximate depth from a single view through supervised learning.
 
 ---
@@ -125,15 +126,14 @@ This penalizes multiplicative depth errors rather than additive, emphasizing rel
 
 After each validation epoch, the following standard metrics are computed:
 
-
 | Metric | Formula |
 |--------|---------|
-| **AbsRel** | $ \frac{1}{N} \sum_i \frac{\|D_i - \hat{D}_i\|}{D_i} $ |
-| **RMSE** | $ \sqrt{\frac{1}{N} \sum_i (D_i - \hat{D}_i)^2} $ |
-| **RMSE_log** | $ \sqrt{\frac{1}{N} \sum_i (\log D_i - \log \hat{D}_i)^2} $ |
-| **δ₁, δ₂, δ₃** | Fraction of pixels s.t. $ \max(\frac{D_i}{\hat{D}_i}, \frac{\hat{D}_i}{D_i}) < 1.25^t $, for $ t = 1, 2, 3 $ |
-
-
+| **AbsRel** | Mean( \|D - D̂\| / D ) |
+| **RMSE** | √Mean( (D - D̂)² ) |
+| **RMSE_log** | √Mean( (log D - log D̂)² ) |
+| **δ₁** | % of pixels where max(D/D̂, D̂/D) < 1.25 |
+| **δ₂** | % of pixels where max(D/D̂, D̂/D) < 1.25² |
+| **δ₃** | % of pixels where max(D/D̂, D̂/D) < 1.25³ |
 
 Each training sample consists of an RGB image and a depth map in NumPy format:
 
@@ -196,8 +196,8 @@ Each checkpoint includes:
 - Depth predictions are not guaranteed to be metrically accurate unless trained on physically calibrated depth data.  
 - The stereo baseline $B$ and focal length $f$ from calibration can be used to convert disparity maps to metric depth for ground truth supervision.
 
-
 ## TODO
- - Normalize depths before training to improve stability.
- - Add augmentations (torchvision.transforms or Albumentations).
- - Add gradient clipping to avoid gradient explosions.
+
+- Normalize depths before training to improve stability
+- Add augmentations (torchvision.transforms or Albumentations)
+- Add gradient clipping to avoid gradient explosions
